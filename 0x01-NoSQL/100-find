@@ -1,2 +1,2 @@
 // regex in mongo
-db.school.find({name: /^ALX/})
+db.school.find({ name: /^ALX/ })
