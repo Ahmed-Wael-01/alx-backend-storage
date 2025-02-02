@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """cache class with redis"""
-import redis, uuid
+import redis
+import uuid
 from typing import Union, Optional, Callable
 from functools import wraps
 
 
 def count_calls(method: Callable) -> Callable:
+    """counts method calls"""
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         key = method.__qualname__
@@ -13,7 +15,9 @@ def count_calls(method: Callable) -> Callable:
         return method(self, *args, **kwargs)
     return wrapper
 
+
 def call_history(method: Callable) -> Callable:
+    """saves each methods call history"""
     inputs = method.__qualname__ + ':inputs'
     outputs = method.__qualname__ + ':outputs'
     @wraps(method)
@@ -24,7 +28,9 @@ def call_history(method: Callable) -> Callable:
         return out
     return wrapper
 
+
 def replay(method: Callable) -> None:
+    """replays the call history of a method"""
     name = method.__qualname__
     cache = redis.Redis()
     calls = cache.get(name).decode("utf-8")
@@ -45,21 +51,25 @@ class Cache:
     @call_history
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
+        """stores an element in redis"""
         key = str(uuid.uuid4())
         self._redis.set(key, data)
         return key
 
     def get(self, key: str,
             fn: Optional[Callable] = None) -> Union[str, bytes, int, float]:
+        """gets an element from redis with a key"""
         value = self._redis.get(key)
         if fn:
             value = fn(value)
         return value
 
     def get_str(self, key):
+        """get string"""
         return str(self._redis.get(key))
 
     def get_int(self, key):
+        """get integer"""
         value = self._redis.get(key)
         try:
             value = int(value)
